@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { TradeEntryForm } from "./TradeEntryForm";
 import { TradingCalendar } from "./TradingCalendar";
 import { StatsCards } from "./StatsCards";
-import { PlusCircle, TrendingUp, Calendar, Settings, Download, Upload, DollarSign, Menu } from "lucide-react";
+import { CirclePlus as PlusCircle, TrendingUp, Calendar, Settings, Download, Upload, DollarSign, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export interface Trade {
