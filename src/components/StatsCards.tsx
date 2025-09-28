@@ -59,26 +59,26 @@ export const StatsCards = ({ trades, displayMode }: StatsCardsProps) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (
           <Card key={index} className="trading-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
-              <Icon className={`h-4 w-4 ${
+              <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${
                 stat.trend === "positive" ? "text-green-400" : "text-red-400"
               }`} />
             </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold mb-1 ${
+            <CardContent className="p-3 sm:p-6 pt-0">
+              <div className={`text-lg sm:text-2xl font-bold mb-1 ${
                 stat.trend === "positive" ? "text-green-400" : "text-red-400"
               }`}>
                 {stat.value}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground hidden sm:block">
                 {stat.subtitle}
               </p>
             </CardContent>

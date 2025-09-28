@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { TradeEntryForm } from "./TradeEntryForm";
 import { TradingCalendar } from "./TradingCalendar";
 import { StatsCards } from "./StatsCards";
-import { PlusCircle, TrendingUp, Calendar, Settings, Download, Upload, DollarSign } from "lucide-react";
-import tradingHero from "@/assets/trading-hero.jpg";
+import { PlusCircle, TrendingUp, Calendar, Settings, Download, Upload, DollarSign, Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export interface Trade {
   id: string;
@@ -34,11 +34,11 @@ const TradingDashboard = () => {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [displayMode, setDisplayMode] = useState<"$" | "RR">("$");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountSettings, setAccountSettings] = useState<AccountSettings>({
     balance: 100000,
     defaultRiskPercent: 1
   });
-  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   const addTrade = (trade: Omit<Trade, "id">) => {
     const newTrade: Trade = {
@@ -125,31 +125,75 @@ const TradingDashboard = () => {
   const totalProfitRR = trades.reduce((sum, trade) => sum + trade.profitRR, 0);
   const winRate = trades.length > 0 ? (trades.filter(trade => trade.isWin).length / trades.length) * 100 : 0;
 
+  const ActionButtons = () => (
+    <div className="flex flex-wrap gap-2">
+      <Button variant="outline" size="sm" className="text-xs">
+        <DollarSign className="w-3 h-3 mr-1" />
+        <span className="hidden sm:inline">Account: </span>${accountSettings.balance.toLocaleString()}
+      </Button>
+      <Button variant="outline" size="sm" onClick={exportToCSV} className="text-xs">
+        <Download className="w-3 h-3 mr-1" />
+        <span className="hidden sm:inline">Export</span>
+      </Button>
+      <Button variant="outline" size="sm" onClick={() => document.getElementById('csv-import')?.click()} className="text-xs">
+        <Upload className="w-3 h-3 mr-1" />
+        <span className="hidden sm:inline">Import</span>
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setDisplayMode(displayMode === "$" ? "RR" : "$")}
+        className="text-xs"
+      >
+        <Settings className="w-3 h-3 mr-1" />
+        {displayMode}
+      </Button>
+      <Button 
+        onClick={() => setShowAddForm(true)}
+        className="gradient-primary text-xs"
+        size="sm"
+      >
+        <PlusCircle className="w-3 h-3 mr-1" />
+        Add Trade
+      </Button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <div className="relative h-64 overflow-hidden rounded-b-3xl">
-        <img 
-          src={tradingHero} 
-          alt="Trading Dashboard" 
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-background/40" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-2 text-foreground">
-              Trading Journal Pro
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Track, analyze, and optimize your trading performance
-            </p>
+      <div className="container mx-auto p-4 space-y-6">
+        {/* Mobile Header */}
+        <div className="flex justify-between items-center lg:hidden">
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="px-4 py-2">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              {trades.length} Trades Logged
+            </Badge>
           </div>
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Menu className="w-4 h-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80">
+              <div className="space-y-4 mt-6">
+                <div className="space-y-2">
+                  <Badge 
+                    variant={totalProfit >= 0 ? "default" : "destructive"} 
+                    className={`w-full justify-center py-2 ${totalProfit >= 0 ? "gradient-success" : "gradient-destructive"}`}
+                  >
+                    Total P&L: {displayMode === "$" ? `$${totalProfit.toFixed(2)}` : `${totalProfitRR.toFixed(2)}R`}
+                  </Badge>
+                </div>
+                <ActionButtons />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-      </div>
 
-      <div className="container mx-auto p-6 space-y-8">
-        {/* Header Actions */}
-        <div className="flex justify-between items-center">
+        {/* Desktop Header */}
+        <div className="hidden lg:flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="px-4 py-2">
               <TrendingUp className="w-4 h-4 mr-2" />
@@ -162,37 +206,7 @@ const TradingDashboard = () => {
               Total P&L: {displayMode === "$" ? `$${totalProfit.toFixed(2)}` : `${totalProfitRR.toFixed(2)}R`}
             </Badge>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setAccountSettings(prev => ({ ...prev, balance: accountSettings.balance }))}
-            >
-              <DollarSign className="w-4 h-4 mr-2" />
-              Account: ${accountSettings.balance.toLocaleString()}
-            </Button>
-            <Button variant="outline" onClick={exportToCSV}>
-              <Download className="w-4 h-4 mr-2" />
-              Export CSV
-            </Button>
-            <Button variant="outline" onClick={() => document.getElementById('csv-import')?.click()}>
-              <Upload className="w-4 h-4 mr-2" />
-              Import CSV
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setDisplayMode(displayMode === "$" ? "RR" : "$")}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Display: {displayMode}
-            </Button>
-            <Button 
-              onClick={() => setShowAddForm(true)}
-              className="gradient-primary"
-            >
-              <PlusCircle className="w-4 h-4 mr-2" />
-              Add Trade
-            </Button>
-          </div>
+          <ActionButtons />
           <input
             id="csv-import"
             type="file"
@@ -206,9 +220,9 @@ const TradingDashboard = () => {
         <StatsCards trades={trades} displayMode={displayMode} />
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Calendar View */}
-          <div className="lg:col-span-2">
+          <div className="xl:col-span-2">
             <Card className="trading-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -268,13 +282,14 @@ const TradingDashboard = () => {
 
         {/* Trade Entry Form Modal */}
         {showAddForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-card border border-border rounded-xl p-6 w-full max-w-2xl">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-card border border-border rounded-xl p-4 sm:p-6 w-full max-w-2xl my-8">
               <TradeEntryForm 
                 onAddTrade={addTrade}
                 onCancel={() => setShowAddForm(false)}
                 accountSettings={accountSettings}
                 onUpdateAccountSettings={setAccountSettings}
+                defaultTab="simple"
               />
             </div>
           </div>

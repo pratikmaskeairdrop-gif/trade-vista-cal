@@ -12,10 +12,11 @@ interface TradeEntryFormProps {
   onCancel: () => void;
   accountSettings: AccountSettings;
   onUpdateAccountSettings: (settings: AccountSettings) => void;
+  defaultTab?: "detailed" | "simple";
 }
 
-export const TradeEntryForm = ({ onAddTrade, onCancel, accountSettings, onUpdateAccountSettings }: TradeEntryFormProps) => {
-  const [activeTab, setActiveTab] = useState("detailed");
+export const TradeEntryForm = ({ onAddTrade, onCancel, accountSettings, onUpdateAccountSettings, defaultTab = "detailed" }: TradeEntryFormProps) => {
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [formData, setFormData] = useState({
     pair: "",
     entry: "",
@@ -164,20 +165,91 @@ export const TradeEntryForm = ({ onAddTrade, onCancel, accountSettings, onUpdate
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="detailed" className="flex items-center gap-2">
-              <Calculator className="w-4 h-4" />
-              Detailed Calculation
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
             <TabsTrigger value="simple" className="flex items-center gap-2">
               <Target className="w-4 h-4" />
-              Simple RR Input
+              <span className="hidden sm:inline">Simple RR Input</span>
+              <span className="sm:hidden">Simple</span>
+            </TabsTrigger>
+            <TabsTrigger value="detailed" className="flex items-center gap-2">
+              <Calculator className="w-4 h-4" />
+              <span className="hidden sm:inline">Detailed Calculation</span>
+              <span className="sm:hidden">Detailed</span>
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="simple">
+            <form onSubmit={handleSimpleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="simplePair">Trading Pair</Label>
+                  <Input
+                    id="simplePair"
+                    value={simpleRRData.pair}
+                    onChange={(e) => handleSimpleChange("pair", e.target.value)}
+                    placeholder="e.g., EURUSD"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="simpleDate">Date</Label>
+                  <Input
+                    id="simpleDate"
+                    type="date"
+                    value={simpleRRData.date}
+                    onChange={(e) => handleSimpleChange("date", e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="rrValue">Risk/Reward (RR)</Label>
+                  <Input
+                    id="rrValue"
+                    type="number"
+                    step="0.1"
+                    value={simpleRRData.rrValue}
+                    onChange={(e) => handleSimpleChange("rrValue", e.target.value)}
+                    placeholder="e.g., 2 (profit) or -1 (loss)"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Positive for profit (1, 2, 3), negative for loss (-0.5, -1)
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="simpleAccountBalance">Account Balance ($)</Label>
+                  <Input
+                    id="simpleAccountBalance"
+                    type="number"
+                    step="0.01"
+                    value={simpleRRData.accountBalance}
+                    onChange={(e) => handleSimpleChange("accountBalance", e.target.value)}
+                    placeholder="100000"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    1R = 1% of account balance
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                <Button type="submit" className="flex-1 gradient-primary">
+                  Add Trade
+                </Button>
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
+
           <TabsContent value="detailed">
             <form onSubmit={handleDetailedSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="pair">Trading Pair</Label>
                   <Input
@@ -200,7 +272,7 @@ export const TradeEntryForm = ({ onAddTrade, onCancel, accountSettings, onUpdate
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="entry">Entry Price</Label>
                   <Input
@@ -239,7 +311,7 @@ export const TradeEntryForm = ({ onAddTrade, onCancel, accountSettings, onUpdate
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="accountBalance">Account Balance ($)</Label>
                   <Input
@@ -266,76 +338,7 @@ export const TradeEntryForm = ({ onAddTrade, onCancel, accountSettings, onUpdate
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" className="flex-1 gradient-primary">
-                  Add Trade
-                </Button>
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="simple">
-            <form onSubmit={handleSimpleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="simplePair">Trading Pair</Label>
-                  <Input
-                    id="simplePair"
-                    value={simpleRRData.pair}
-                    onChange={(e) => handleSimpleChange("pair", e.target.value)}
-                    placeholder="e.g., EURUSD"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="simpleDate">Date</Label>
-                  <Input
-                    id="simpleDate"
-                    type="date"
-                    value={simpleRRData.date}
-                    onChange={(e) => handleSimpleChange("date", e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="rrValue">Risk/Reward (RR)</Label>
-                  <Input
-                    id="rrValue"
-                    type="number"
-                    step="0.1"
-                    value={simpleRRData.rrValue}
-                    onChange={(e) => handleSimpleChange("rrValue", e.target.value)}
-                    placeholder="e.g., 2 (profit) or -1 (loss)"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Positive for profit (1, 2, 3), negative for loss (-0.5, -1)
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="simpleAccountBalance">Account Balance ($)</Label>
-                  <Input
-                    id="simpleAccountBalance"
-                    type="number"
-                    step="0.01"
-                    value={simpleRRData.accountBalance}
-                    onChange={(e) => handleSimpleChange("accountBalance", e.target.value)}
-                    placeholder="100000"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    1R = 1% of account balance
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 pt-4">
                 <Button type="submit" className="flex-1 gradient-primary">
                   Add Trade
                 </Button>
