@@ -14,18 +14,23 @@ export const StatsCards = ({ trades, displayMode }: StatsCardsProps) => {
   const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
   
   const totalProfit = trades.reduce((sum, trade) => sum + trade.profit, 0);
-  const avgWin = winningTrades > 0 ? trades.filter(trade => trade.isWin).reduce((sum, trade) => sum + trade.profit, 0) / winningTrades : 0;
-  const avgLoss = losingTrades > 0 ? Math.abs(trades.filter(trade => !trade.isWin).reduce((sum, trade) => sum + trade.profit, 0) / losingTrades) : 0;
+  const totalProfitRR = trades.reduce((sum, trade) => sum + trade.profitRR, 0);
+  const avgWin = winningTrades > 0 ? trades.filter(trade => trade.isWin).reduce((sum, trade) => sum + (displayMode === "$" ? trade.profit : trade.profitRR), 0) / winningTrades : 0;
+  const avgLoss = losingTrades > 0 ? Math.abs(trades.filter(trade => !trade.isWin).reduce((sum, trade) => sum + (displayMode === "$" ? trade.profit : trade.profitRR), 0) / losingTrades) : 0;
   const profitFactor = avgLoss > 0 ? (avgWin * winningTrades) / (avgLoss * losingTrades) : 0;
 
   const formatValue = (value: number) => {
     return displayMode === "$" ? `$${value.toFixed(2)}` : `${value.toFixed(2)}R`;
   };
 
+  const formatRRValue = (rrValue: number) => {
+    return displayMode === "RR" ? `${rrValue.toFixed(2)}R` : `$${(rrValue * (trades[0]?.accountBalance || 100000) * 0.01).toFixed(2)}`;
+  };
+
   const stats = [
     {
       title: "Total P&L",
-      value: formatValue(totalProfit),
+      value: displayMode === "$" ? formatValue(totalProfit) : `${totalProfitRR.toFixed(2)}R`,
       icon: totalProfit >= 0 ? TrendingUp : TrendingDown,
       trend: totalProfit >= 0 ? "positive" : "negative",
       subtitle: `From ${totalTrades} trades`,

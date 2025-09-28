@@ -64,12 +64,14 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
     });
 
     const weekProfit = weekTrades.reduce((sum, trade) => sum + trade.profit, 0);
+    const weekProfitRR = weekTrades.reduce((sum, trade) => sum + trade.profitRR, 0);
     const weekWins = weekTrades.filter(trade => trade.isWin).length;
     const weekWinRate = weekTrades.length > 0 ? (weekWins / weekTrades.length) * 100 : 0;
 
     return {
       trades: weekTrades.length,
       profit: weekProfit,
+      profitRR: weekProfitRR,
       winRate: weekWinRate,
     };
   };
@@ -101,6 +103,7 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
   });
 
   const monthProfit = monthTrades.reduce((sum, trade) => sum + trade.profit, 0);
+  const monthProfitRR = monthTrades.reduce((sum, trade) => sum + trade.profitRR, 0);
   const monthWins = monthTrades.filter(trade => trade.isWin).length;
   const monthWinRate = monthTrades.length > 0 ? (monthWins / monthTrades.length) * 100 : 0;
 
@@ -136,6 +139,7 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
 
           const dayTrades = getTradesForDate(day);
           const dayProfit = dayTrades.reduce((sum, trade) => sum + trade.profit, 0);
+          const dayProfitRR = dayTrades.reduce((sum, trade) => sum + trade.profitRR, 0);
           const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
 
           return (
@@ -150,10 +154,10 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
               <div className="text-sm font-medium">{day}</div>
               {dayTrades.length > 0 && (
                 <div className="absolute bottom-1 left-1 right-1 text-xs">
-                  <div className={`font-bold ${dayProfit > 0 ? "text-green-400" : "text-red-400"}`}>
-                    {displayMode === "$" ? `$${dayProfit.toFixed(0)}` : `${dayProfit.toFixed(1)}R`}
+                  <div className={`font-bold text-center ${dayProfit > 0 ? "text-green-400" : "text-red-400"}`}>
+                    {displayMode === "$" ? `$${dayProfit.toFixed(0)}` : `${dayProfitRR.toFixed(1)}R`}
                   </div>
-                  <div className="text-muted-foreground">{dayTrades.length} trades</div>
+                  <div className="text-muted-foreground text-center">{dayTrades.length} trades</div>
                 </div>
               )}
             </div>
@@ -176,7 +180,7 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
                 <div className="flex justify-between">
                   <span>P&L:</span>
                   <span className={`font-bold ${week.profit >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {displayMode === "$" ? `$${week.profit.toFixed(2)}` : `${week.profit.toFixed(2)}R`}
+                    {displayMode === "$" ? `$${week.profit.toFixed(2)}` : `${week.profitRR.toFixed(2)}R`}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -199,7 +203,7 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
           </div>
           <div className="text-center">
             <div className={`text-2xl font-bold ${monthProfit >= 0 ? "text-green-400" : "text-red-400"}`}>
-              {displayMode === "$" ? `$${monthProfit.toFixed(2)}` : `${monthProfit.toFixed(2)}R`}
+              {displayMode === "$" ? `$${monthProfit.toFixed(2)}` : `${monthProfitRR.toFixed(2)}R`}
             </div>
             <div className="text-sm text-muted-foreground">Total P&L</div>
           </div>
