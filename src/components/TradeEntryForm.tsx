@@ -11,11 +11,10 @@ interface TradeEntryFormProps {
   onAddTrade: (trade: Omit<Trade, "id">) => void;
   onCancel: () => void;
   accountSettings: AccountSettings;
-  onUpdateAccountSettings: (settings: AccountSettings) => void;
   defaultTab?: "detailed" | "simple";
 }
 
-export const TradeEntryForm = ({ onAddTrade, onCancel, accountSettings, onUpdateAccountSettings, defaultTab = "detailed" }: TradeEntryFormProps) => {
+export const TradeEntryForm = ({ onAddTrade, onCancel, accountSettings, defaultTab = "simple" }: TradeEntryFormProps) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [formData, setFormData] = useState({
     pair: "",
@@ -82,12 +81,6 @@ export const TradeEntryForm = ({ onAddTrade, onCancel, accountSettings, onUpdate
       riskPercent
     });
 
-    // Update account settings
-    onUpdateAccountSettings({
-      balance: accountBalance,
-      defaultRiskPercent: riskPercent
-    });
-
     resetForms();
   };
 
@@ -115,12 +108,6 @@ export const TradeEntryForm = ({ onAddTrade, onCancel, accountSettings, onUpdate
       date: new Date(simpleRRData.date),
       entryMethod: 'simple',
       accountBalance
-    });
-
-    // Update account balance
-    onUpdateAccountSettings({
-      ...accountSettings,
-      balance: accountBalance
     });
 
     resetForms();

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,8 @@ import { TradingCalendar } from "./TradingCalendar";
 import { StatsCards } from "./StatsCards";
 import { CirclePlus as PlusCircle, TrendingUp, Calendar, Settings, Download, Upload, DollarSign, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DatabaseService, TradeRecord, UserProfile } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 export interface Trade {
   id: string;
@@ -30,8 +33,14 @@ export interface AccountSettings {
   defaultRiskPercent: number;
 }
 
-const TradingDashboard = () => {
+interface TradingDashboardProps {
+  user: User;
+}
+
+const TradingDashboard = ({ user }: TradingDashboardProps) => {
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [displayMode, setDisplayMode] = useState<"$" | "RR">("$");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -40,12 +49,118 @@ const TradingDashboard = () => {
     defaultRiskPercent: 1
   });
 
-  const addTrade = (trade: Omit<Trade, "id">) => {
-    const newTrade: Trade = {
-      ...trade,
-      id: crypto.randomUUID(),
+  // Load user data on component mount
+  useEffect(() => {
+    loadUserData();
+  }, [user]);
+
+  const loadUserData = async () => {
+    setLoading(true);
+    
+    // Load user profile
+    let profile = await DatabaseService.getUserProfile(user.id);
+    
+    // Create profile if it doesn't exist
+    if (!profile) {
+      profile = await DatabaseService.createUserProfile({
+        user_id: user.id,
+        email: user.email || '',
+        full_name: user.user_metadata?.full_name || '',
+        account_balance: 100000,
+        default_risk_percent: 1
+      });
+    }
+    
+    if (profile) {
+      setUserProfile(profile);
+      setAccountSettings({
+        balance: profile.account_balance,
+        defaultRiskPercent: profile.default_risk_percent
+      });
+    }
+    
+    // Load trades
+    const tradeRecords = await DatabaseService.getUserTrades(user.id);
+    const formattedTrades: Trade[] = tradeRecords.map(record => ({
+      id: record.id,
+      pair: record.pair,
+      entry: record.entry_price || undefined,
+      exit: record.exit_price || undefined,
+      stopLoss: record.stop_loss || undefined,
+      takeProfit: record.take_profit || undefined,
+      size: record.position_size,
+      profit: record.profit_usd,
+      profitRR: record.profit_rr,
+      date: new Date(record.trade_date),
+      isWin: record.is_win,
+      entryMethod: record.entry_method,
+      accountBalance: record.account_balance_at_trade,
+      riskPercent: record.risk_percent || undefined
+    }));
+    
+    setTrades(formattedTrades);
+    setLoading(false);
+  };
+
+  const addTrade = async (trade: Omit<Trade, "id">) => {
+    // Save to database
+    const tradeRecord: Omit<TradeRecord, 'id' | 'created_at' | 'updated_at'> = {
+      user_id: user.id,
+      pair: trade.pair,
+      entry_price: trade.entry || null,
+      exit_price: trade.exit || null,
+      stop_loss: trade.stopLoss || null,
+      take_profit: trade.takeProfit || null,
+      position_size: trade.size,
+      profit_usd: trade.profit,
+      profit_rr: trade.profitRR,
+      is_win: trade.isWin,
+      entry_method: trade.entryMethod,
+      account_balance_at_trade: trade.accountBalance,
+      risk_percent: trade.riskPercent || null,
+      trade_date: trade.date.toISOString().split('T')[0]
     };
-    setTrades([...trades, newTrade]);
+    
+    const savedTrade = await DatabaseService.createTrade(tradeRecord);
+    
+    if (savedTrade) {
+      // Add to local state
+      const newTrade: Trade = {
+        id: savedTrade.id,
+        pair: savedTrade.pair,
+        entry: savedTrade.entry_price || undefined,
+        exit: savedTrade.exit_price || undefined,
+        stopLoss: savedTrade.stop_loss || undefined,
+        takeProfit: savedTrade.take_profit || undefined,
+        size: savedTrade.position_size,
+        profit: savedTrade.profit_usd,
+        profitRR: savedTrade.profit_rr,
+        date: new Date(savedTrade.trade_date),
+        isWin: savedTrade.is_win,
+        entryMethod: savedTrade.entry_method,
+        accountBalance: savedTrade.account_balance_at_trade,
+        riskPercent: savedTrade.risk_percent || undefined
+      };
+      
+      setTrades(prev => [newTrade, ...prev]);
+      
+      // Update user profile with new account balance
+      if (userProfile) {
+        const updatedProfile = await DatabaseService.updateUserProfile(user.id, {
+          account_balance: trade.accountBalance,
+          default_risk_percent: trade.riskPercent || userProfile.default_risk_percent
+        });
+        
+        if (updatedProfile) {
+          setUserProfile(updatedProfile);
+          setAccountSettings({
+            balance: updatedProfile.account_balance,
+            defaultRiskPercent: updatedProfile.default_risk_percent
+          });
+        }
+      }
+    }
+    
     setShowAddForm(false);
   };
 
@@ -124,6 +239,17 @@ const TradingDashboard = () => {
   const totalProfit = trades.reduce((sum, trade) => sum + trade.profit, 0);
   const totalProfitRR = trades.reduce((sum, trade) => sum + trade.profitRR, 0);
   const winRate = trades.length > 0 ? (trades.filter(trade => trade.isWin).length / trades.length) * 100 : 0;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your trading data...</p>
+        </div>
+      </div>
+    );
+  }
 
   const ActionButtons = () => (
     <div className="flex flex-wrap gap-2">
@@ -288,7 +414,6 @@ const TradingDashboard = () => {
                 onAddTrade={addTrade}
                 onCancel={() => setShowAddForm(false)}
                 accountSettings={accountSettings}
-                onUpdateAccountSettings={setAccountSettings}
                 defaultTab="simple"
               />
             </div>
