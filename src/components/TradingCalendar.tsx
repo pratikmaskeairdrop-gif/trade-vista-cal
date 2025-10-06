@@ -68,12 +68,15 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
     const weekProfit = weekTrades.reduce((sum, trade) => sum + trade.profit, 0);
     const weekProfitRR = weekTrades.reduce((sum, trade) => sum + trade.profitRR, 0);
     const weekWins = weekTrades.filter(trade => trade.isWin).length;
+    const weekLosses = weekTrades.filter(trade => !trade.isWin).length;
     const weekWinRate = weekTrades.length > 0 ? (weekWins / weekTrades.length) * 100 : 0;
 
     return {
       trades: weekTrades.length,
       profit: weekProfit,
       profitRR: weekProfitRR,
+      wins: weekWins,
+      losses: weekLosses,
       winRate: weekWinRate,
     };
   };
@@ -107,6 +110,7 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
   const monthProfit = monthTrades.reduce((sum, trade) => sum + trade.profit, 0);
   const monthProfitRR = monthTrades.reduce((sum, trade) => sum + trade.profitRR, 0);
   const monthWins = monthTrades.filter(trade => trade.isWin).length;
+  const monthLosses = monthTrades.filter(trade => !trade.isWin).length;
   const monthWinRate = monthTrades.length > 0 ? (monthWins / monthTrades.length) * 100 : 0;
 
   // Generate chart data for the current month
@@ -233,7 +237,7 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
             <CardTitle className="text-lg">Monthly Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               <div className="text-center">
                 <div className="text-xl sm:text-2xl font-bold">{monthTrades.length}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Total Trades</div>
@@ -249,8 +253,12 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
                 <div className="text-xs sm:text-sm text-muted-foreground">Win Rate</div>
               </div>
               <div className="text-center">
-                <div className="text-xl sm:text-2xl font-bold">{monthWins}</div>
+                <div className="text-xl sm:text-2xl font-bold text-green-400">{monthWins}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">Wins</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl sm:text-2xl font-bold text-red-400">{monthLosses}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">Losses</div>
               </div>
             </div>
           </CardContent>
@@ -275,6 +283,14 @@ export const TradingCalendar = ({ trades, displayMode }: TradingCalendarProps) =
                 <div className="flex justify-between">
                   <span className="text-sm">Win Rate:</span>
                   <span className="font-medium">{week.winRate.toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Wins:</span>
+                  <span className="font-medium text-green-400">{week.wins}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Losses:</span>
+                  <span className="font-medium text-red-400">{week.losses}</span>
                 </div>
               </div>
             </div>
